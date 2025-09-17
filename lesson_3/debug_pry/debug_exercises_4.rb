@@ -5,7 +5,7 @@ require 'pry-byebug'
 
 def fruit_descriptions(list)
   descriptions = []
-#  binding.pry
+  binding.pry
   list.each do |item|
     descriptions << "The #{item['name']} is a #{item['type']} and is #{item['color']}."
   end
