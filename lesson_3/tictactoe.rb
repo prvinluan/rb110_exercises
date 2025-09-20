@@ -55,10 +55,23 @@ def empty_board(brd)
   brd.keys.select { |num| brd[num] == INITIAL_MARKER }
 end
 
+def joinor(brd, sep = ", ", con = "or")
+  case brd.size
+  when 1
+    brd.to_s
+  when 2
+    "#{brd.join(" #{con} ")}"
+  else
+    brd2 = brd.dup
+    last = brd2.pop
+    "#{brd2.join(sep)} #{con} #{last}"
+  end
+end
+
 def player_places_piece!(brd)
   square = ''
   loop do
-    prompt("Choose a square (#{empty_board(brd).join(', ')}):")
+    prompt("Choose a square (#{joinor(empty_board(brd))}):")
     square = gets.chomp.to_i
     break if empty_board(brd).include?(square)
     prompt "Sorry, thats not a valid choice."
@@ -80,18 +93,17 @@ def someone_won?(brd)
 end
 
 def detect_winner(brd)
-#  WINNING_LINES.each do |line|
-#    if brd[line[0]] == PLAYER_MARKER &&
-#       brd[line[1]] == PLAYER_MARKER &&
-#       brd[line[2]] == PLAYER_MARKER
-#      return "Player"
-#    elsif brd[line[0]] == COMPUTER_MARKER &&
-#          brd[line[1]] == COMPUTER_MARKER &&
-#          brd[line[2]] == COMPUTER_MARKER
-#      return "Computer"
-#    end
-#  end
-
+  #  WINNING_LINES.each do |line|
+  #    if brd[line[0]] == PLAYER_MARKER &&
+  #       brd[line[1]] == PLAYER_MARKER &&
+  #       brd[line[2]] == PLAYER_MARKER
+  #      return "Player"
+  #    elsif brd[line[0]] == COMPUTER_MARKER &&
+  #          brd[line[1]] == COMPUTER_MARKER &&
+  #          brd[line[2]] == COMPUTER_MARKER
+  #      return "Computer"
+  #    end
+  #  end
   WINNING_LINES.each do |line|
     if brd.values_at(line[0], line[1], line[2]).count(PLAYER_MARKER) == 3
       return "Player"
