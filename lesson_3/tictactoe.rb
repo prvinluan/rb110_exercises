@@ -21,14 +21,19 @@ INITIAL_MARKER = " "
 PLAYER_MARKER = "X"
 COMPUTER_MARKER = "O"
 
+SORRY_MSG = "Sorry, thats not a valid choice."
+
 def prompt(msg)
   puts "=> #{msg}"
 end
 
 # rubocop:disable Metrics/AbcSize
-def display_board(brd)
+def display_board(brd, scores)
   system 'clear'
   puts "You're a #{PLAYER_MARKER}. Computer is #{COMPUTER_MARKER}."
+  puts ""
+  puts "Player score: #{scores['Player']}"
+  puts "Computer score: #{scores['Computer']}"
   puts ""
   puts "     |     |     "
   puts "  #{brd[1]}  |  #{brd[2]}  |  #{brd[3]}  "
@@ -58,7 +63,7 @@ end
 def joinor(brd, sep = ", ", con = "or")
   case brd.size
   when 1
-    brd.to_s
+    "#{brd.join}"
   when 2
     "#{brd.join(" #{con} ")}"
   else
@@ -74,7 +79,7 @@ def player_places_piece!(brd)
     prompt("Choose a square (#{joinor(empty_board(brd))}):")
     square = gets.chomp.to_i
     break if empty_board(brd).include?(square)
-    prompt "Sorry, thats not a valid choice."
+    prompt SORRY_MSG
   end
   brd[square] = PLAYER_MARKER
 end
@@ -104,6 +109,7 @@ def detect_winner(brd)
   #      return "Computer"
   #    end
   #  end
+
   WINNING_LINES.each do |line|
     if brd.values_at(line[0], line[1], line[2]).count(PLAYER_MARKER) == 3
       return "Player"
@@ -114,11 +120,20 @@ def detect_winner(brd)
   nil
 end
 
+def keep_score(winner, scores)
+  if winner == "Player"
+    scores['Player'] += 1
+  elsif winner == "Computer"
+    scores['Computer'] += 1
+  end
+end
+
+scores = { 'Player' => 0, 'Computer' => 0 }
 loop do
   board = initialize_board
 
   loop do
-    display_board(board)
+    display_board(board, scores)
 
     player_places_piece!(board)
     break if someone_won?(board) || board_full?(board)
@@ -127,16 +142,28 @@ loop do
     break if someone_won?(board) || board_full?(board)
   end
 
-  display_board(board)
+  display_board(board, scores)
 
   if someone_won?(board)
     prompt "#{detect_winner(board)} won!"
   else
     prompt "It's a tie!"
   end
-  prompt "Play again? type 'Y' or 'N'"
-  ans = gets.chomp
-  break unless ans.downcase.start_with?('y')
+
+  keep_score(detect_winner(board), scores)
+
+  break prompt "#{scores.key(5)} wins the game!" if scores.values.any?(5)
+
+  loop do
+    prompt "Ready for next round? Type 'Y'"
+    ans = gets.chomp
+    break if ans.downcase.start_with?('y')
+    prompt SORRY_MSG
+  end
+
+  # prompt "Play again? Type 'Y' or 'N'"
+  # ans = gets.chomp
+  # break unless ans.downcase.start_with?('y')
 end
 
 prompt "Thanks for playing Tic Tac Toe!"
