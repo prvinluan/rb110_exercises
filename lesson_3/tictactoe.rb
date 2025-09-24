@@ -85,28 +85,39 @@ def player_places_piece!(brd)
   brd[square] = PLAYER_MARKER
 end
 
-def threat(wline, brd)
-  wline.count do |box|
-    brd[box] == "X"
+def odds?(lines, brd, mark)
+  count = lines.count do |box|
+    brd[box] == mark
   end
+  count == 2
 end
 
-def find_at_risk_square(brd)
-  block = nil
-
+def mark_the_third_square(brd)
   WINNING_LINES.each do |lines|
-    if threat(lines, brd) == 2
+    if odds?(lines, brd, COMPUTER_MARKER)
       lines.each do |key|
-        return block = key if brd[key] == " "
+        return key if brd[key] == " "
       end
     end
   end
+  nil
+end
 
-  block.nil? ? empty_board(brd).sample : block
+def find_at_risk_square(brd)
+  WINNING_LINES.each do |lines|
+    if odds?(lines, brd, PLAYER_MARKER)
+      lines.each do |key|
+        return key if brd[key] == " "
+      end
+    end
+  end
+  nil
 end
 
 def computer_places_piece!(brd)
-  square = find_at_risk_square(brd)
+  square =
+    mark_the_third_square(brd) || find_at_risk_square(brd) ||
+    empty_board(brd).sample
   brd[square] = COMPUTER_MARKER
 end
 
