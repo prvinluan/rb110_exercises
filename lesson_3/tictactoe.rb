@@ -88,7 +88,7 @@ def pick_square_five(brd)
   nil
 end
 
-def odds?(lines, brd, mark)
+def winning_odds?(lines, brd, mark)
   count = lines.count do |box|
     brd[box] == mark
   end
@@ -97,7 +97,7 @@ end
 
 def mark_the_third_square(brd)
   WINNING_LINES.each do |lines|
-    if odds?(lines, brd, COMPUTER_MARKER)
+    if winning_odds?(lines, brd, COMPUTER_MARKER)
       lines.each do |key|
         return key if brd[key] == INITIAL_MARKER
       end
@@ -108,7 +108,7 @@ end
 
 def find_at_risk_square(brd)
   WINNING_LINES.each do |lines|
-    if odds?(lines, brd, PLAYER_MARKER)
+    if winning_odds?(lines, brd, PLAYER_MARKER)
       lines.each do |key|
         return key if brd[key] == INITIAL_MARKER
       end
@@ -170,7 +170,7 @@ def plays_first
 
     case order
     when "1"
-      return 1
+      return true
     when "2"
       return comp_decides
     else
@@ -180,9 +180,9 @@ def plays_first
 end
 
 def comp_decides
-  comp_pick = [1, 2].sample
+  comp_pick = [true, false].sample
 
-  if comp_pick == 1
+  if comp_pick
     prompt "Computer wants you to go first"
   else
     prompt "Computer goes first"
@@ -202,66 +202,62 @@ def player_ready(msg)
   end
 end
 
-def player_first(brd, scores)
-  loop do
-    display_board(brd, scores)
-    # binding.pry
+def places_piece!(brd, current)
+  if current
     player_places_piece!(brd)
-    break if someone_won?(brd) || board_full?(brd)
-
+  else
     computer_places_piece!(brd)
-    break if someone_won?(brd) || board_full?(brd)
   end
 end
 
-def computer_first(brd, scores)
-  loop do
-    # binding.pry
-    computer_places_piece!(brd)
-    break if someone_won?(brd) || board_full?(brd)
-
-    display_board(brd, scores)
-
-    player_places_piece!(brd)
-    break if someone_won?(brd) || board_full?(brd)
-  end
+def alternate_player(current)
+  current ? false : true
 end
-
-system "clear"
-scores = { 'Player' => 0, 'Computer' => 0 }
-turn = plays_first
 
 loop do
-  board = initialize_board
+  system "clear"
+  scores = { 'Player' => 0, 'Computer' => 0 }
+  prompt "Tic Tac Toe, best of 5 wins!"
+  turn = plays_first
 
-  turn == 1 ? player_first(board, scores) : computer_first(board, scores)
-  # loop do
-  #   display_board(board, scores)
-  #   # binding.pry
-  #   player_places_piece!(board)
-  #   break if someone_won?(board) || board_full?(board)
+  loop do
+    board = initialize_board
 
-  #   computer_places_piece!(board)
-  #   break if someone_won?(board) || board_full?(board)
-  # end
+    loop do
+      display_board(board, scores)
+      places_piece!(board, turn)
+      break if someone_won?(board) || board_full?(board)
+      turn = alternate_player(turn)
+    end
+    # turn == 1 ? player_first(board, scores) : computer_first(board, scores)
 
-  display_board(board, scores)
+    # loop do
+    #   display_board(board, scores)
+    #   # binding.pry
+    #   player_places_piece!(board)
+    #   break if someone_won?(board) || board_full?(board)
 
-  if someone_won?(board)
-    prompt "#{detect_winner(board)} won!"
-  else
-    prompt "It's a tie!"
+    #   computer_places_piece!(board)
+    #   break if someone_won?(board) || board_full?(board)
+    # end
+
+    display_board(board, scores)
+
+    if someone_won?(board)
+      prompt "#{detect_winner(board)} won!"
+    else
+      prompt "It's a tie!"
+    end
+
+    keep_score(detect_winner(board), scores)
+
+    break prompt "#{scores.key(5)} wins the game!" if scores.values.any?(5)
+
+    player_ready("Ready for the next round")
   end
 
-  keep_score(detect_winner(board), scores)
-
-  break prompt "#{scores.key(5)} wins the game!" if scores.values.any?(5)
-
-  player_ready("Ready for the next round")
-
-  # prompt "Play again? Type 'Y' or 'N'"
-  # ans = gets.chomp
-  # break unless ans.downcase.start_with?('y')
+  prompt "Play another game? Type 'Y' or 'N'"
+  ans = gets.chomp.upcase
+  break unless ans == 'Y'
 end
-
 prompt "Thanks for playing Tic Tac Toe!"
