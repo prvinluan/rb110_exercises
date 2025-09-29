@@ -12,8 +12,6 @@
 # 10. Good bye!
 
 ################################################################################
-require 'pry'
-
 WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] + # rows
                 [[1, 4, 7], [2, 5, 8], [3, 6, 9]] + # columns
                 [[1, 5, 9], [3, 5, 7]]              # diagonals
@@ -85,6 +83,11 @@ def player_places_piece!(brd)
   brd[square] = PLAYER_MARKER
 end
 
+def pick_square_five(brd)
+  return 5 if brd[5] == INITIAL_MARKER
+  nil
+end
+
 def odds?(lines, brd, mark)
   count = lines.count do |box|
     brd[box] == mark
@@ -96,7 +99,7 @@ def mark_the_third_square(brd)
   WINNING_LINES.each do |lines|
     if odds?(lines, brd, COMPUTER_MARKER)
       lines.each do |key|
-        return key if brd[key] == " "
+        return key if brd[key] == INITIAL_MARKER
       end
     end
   end
@@ -107,7 +110,7 @@ def find_at_risk_square(brd)
   WINNING_LINES.each do |lines|
     if odds?(lines, brd, PLAYER_MARKER)
       lines.each do |key|
-        return key if brd[key] == " "
+        return key if brd[key] == INITIAL_MARKER
       end
     end
   end
@@ -117,7 +120,7 @@ end
 def computer_places_piece!(brd)
   square =
     mark_the_third_square(brd) || find_at_risk_square(brd) ||
-    empty_board(brd).sample
+    pick_square_five(brd) || empty_board(brd).sample
   brd[square] = COMPUTER_MARKER
 end
 
@@ -160,18 +163,87 @@ def keep_score(winner, scores)
   end
 end
 
+def plays_first
+  loop do
+    prompt "Who goes first? Type '1' for player or '2' for computer: "
+    order = gets.chomp
+
+    case order
+    when "1"
+      return 1
+    when "2"
+      return comp_decides
+    else
+      prompt SORRY_MSG
+    end
+  end
+end
+
+def comp_decides
+  comp_pick = [1, 2].sample
+
+  if comp_pick == 1
+    prompt "Computer wants you to go first"
+  else
+    prompt "Computer goes first"
+  end
+
+  player_ready("Are you ready to play")
+
+  comp_pick
+end
+
+def player_ready(msg)
+  loop do
+    prompt "#{msg}? Type 'Y'"
+    ready = gets.chomp.upcase
+    break if ready == 'Y'
+    prompt SORRY_MSG
+  end
+end
+
+def player_first(brd, scores)
+  loop do
+    display_board(brd, scores)
+    # binding.pry
+    player_places_piece!(brd)
+    break if someone_won?(brd) || board_full?(brd)
+
+    computer_places_piece!(brd)
+    break if someone_won?(brd) || board_full?(brd)
+  end
+end
+
+def computer_first(brd, scores)
+  loop do
+    # binding.pry
+    computer_places_piece!(brd)
+    break if someone_won?(brd) || board_full?(brd)
+
+    display_board(brd, scores)
+
+    player_places_piece!(brd)
+    break if someone_won?(brd) || board_full?(brd)
+  end
+end
+
+system "clear"
 scores = { 'Player' => 0, 'Computer' => 0 }
+turn = plays_first
+
 loop do
   board = initialize_board
-  loop do
-    display_board(board, scores)
-    # binding.pry
-    player_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
 
-    computer_places_piece!(board)
-    break if someone_won?(board) || board_full?(board)
-  end
+  turn == 1 ? player_first(board, scores) : computer_first(board, scores)
+  # loop do
+  #   display_board(board, scores)
+  #   # binding.pry
+  #   player_places_piece!(board)
+  #   break if someone_won?(board) || board_full?(board)
+
+  #   computer_places_piece!(board)
+  #   break if someone_won?(board) || board_full?(board)
+  # end
 
   display_board(board, scores)
 
@@ -185,12 +257,7 @@ loop do
 
   break prompt "#{scores.key(5)} wins the game!" if scores.values.any?(5)
 
-  loop do
-    prompt "Ready for next round? Type 'Y'"
-    ans = gets.chomp
-    break if ans.downcase.start_with?('y')
-    prompt SORRY_MSG
-  end
+  player_ready("Ready for the next round")
 
   # prompt "Play again? Type 'Y' or 'N'"
   # ans = gets.chomp
